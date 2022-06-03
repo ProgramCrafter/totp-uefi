@@ -1,0 +1,6 @@
+/target
+*.py
+*.movasm
+*.txt
+*.lock0
+*.lock1
