@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
+#![feature(exclusive_range_pattern)]
 
 extern crate alloc;
 extern crate uefi;
@@ -12,22 +13,19 @@ use uefi::prelude::*;
 use uefi::CStr16;
 
 use alloc::vec::Vec;
-use alloc::string::ToString;
 
 fn delay(system_table: &mut SystemTable<Boot>, s: usize) {
   system_table.boot_services().stall(s * 1000 * 1000);
 }
 
-fn delay_approximate(s: usize) {
+fn delay_approximate(ms: usize) {
   let mut v: u8 = 0;
   let p: *mut u8 = &mut v;
   
-  for _ in 0..s {
-    for _ in 0..256 {
-      for _ in 0..1024 {
-        for i in 0..255 {
-          unsafe {core::ptr::write_volatile(p, i as u8);}
-        }
+  for _ in 0..ms {
+    for _ in 0..262 {
+      for i in 0..255 {
+        unsafe {core::ptr::write_volatile(p, i as u8);}
       }
     }
   }
@@ -83,8 +81,6 @@ impl<'boot> WindowManager<'boot> {
       }
     }
     
-    delay_approximate(5);
-    
     Some(WindowManager {
       windows: Vec::new(),
       width:   width,
@@ -95,7 +91,7 @@ impl<'boot> WindowManager<'boot> {
     })
   }
   
-  /*
+  #[allow(unused)]
   fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
     if x >= self.width || y >= self.height {return;}
     
@@ -103,11 +99,8 @@ impl<'boot> WindowManager<'boot> {
       self.fb.write_value::<u32>(y * self.stride + x, color);
     }
   }
-  */
   
   fn draw_windows(&mut self) {
-    let mut buf = [0; 255];
-    
     for window in self.windows.iter() {
       for y in window.y..(window.y + window.h) {
         for x in window.x..(window.x + window.w) {
@@ -119,6 +112,13 @@ impl<'boot> WindowManager<'boot> {
         }
       }
     }
+  }
+  
+  fn tick(&mut self, system_table: &mut SystemTable<Boot>) {
+    self.draw_windows();
+    
+    delay_approximate(40);
+    // system_table.boot_services().stall(50); // 50 ms
   }
 }
 
@@ -137,15 +137,33 @@ fn efi_main(image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) -> 
   };
   
   wm.windows.push(Window {x: 0, y: 0, w: 300, h: 200, color: 0x0000FF00});
-  wm.draw_windows();
   
-  delay_approximate(3);
-  
-  // delay(&mut system_table_stdout, 5);
-  // wm.windows[0].color = 0x0080FF00;
-  // wm.draw_windows();
-  
-  // delay_approximate(5);
-  
-  Status::LOAD_ERROR
+  let mut vx: i32 = 1;
+  let mut vy: i32 = 1;
+  let mut i = 0;
+  loop {
+    wm.windows[0].x = ((wm.windows[0].x as i32) + vx) as usize;
+    wm.windows[0].y = ((wm.windows[0].y as i32) + vy) as usize;
+    if wm.windows[0].x + 300 >= wm.width - 1 {vx = -1;}
+    if wm.windows[0].x == 0 {vx = 1;}
+    if wm.windows[0].y + 200 >= wm.height - 1 {vy = -1;}
+    if wm.windows[0].y == 0 {vy = 1;}
+    
+    i += 1;
+    i %= 256 * 8;
+    
+    wm.windows[0].color = match i % 2048 {
+      0..256 =>     {0x00FFFFFF},
+      256..512 =>   {(i % 256) * 0x00000001},
+      512..768 =>   {(i % 256) * 0x00000100},
+      768..1024 =>  {(i % 256) * 0x00000101},
+      1024..1280 => {(i % 256) * 0x00010000},
+      1280..1536 => {(i % 256) * 0x00010001},
+      1536..1792 => {(i % 256) * 0x00010100},
+      1792..2048 => {(i % 256) * 0x00010101},
+      _ => {unreachable!()}
+    };
+    
+    wm.tick(&mut system_table_stdout);
+  }
 }
