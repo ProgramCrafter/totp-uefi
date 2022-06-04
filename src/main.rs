@@ -79,7 +79,7 @@ impl<'boot> WindowManager<'boot> {
     
     for i in 2..80 {
       unsafe {
-        fb.write_value::<u32>((i * stride + i) * 4, 0x00FF0000);
+        fb.write_value::<u32>((i * stride + i) * 4, 0x000000FF);
       }
     }
     
