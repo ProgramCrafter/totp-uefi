@@ -105,25 +105,19 @@ impl<'boot> WindowManager<'boot> {
   }
   */
   
-  fn draw_windows(&mut self, stdout: &mut uefi::proto::console::text::Output) {
+  fn draw_windows(&mut self) {
     let mut buf = [0; 255];
     
     for window in self.windows.iter() {
-      stdout.output_string(CStr16::from_str_with_buf(
-        &("Drawing window ".to_string() + &window.x.to_string() + "+" + &window.y.to_string() + "+" +
-        &window.w.to_string() + "x" + &window.h.to_string()), &mut buf).unwrap()).unwrap();
-      
-      /*
       for y in window.y..(window.y + window.h) {
         for x in window.x..(window.x + window.w) {
           if x >= self.width || y >= self.height {continue;}
           
           unsafe {
-            self.fb.write_value::<u32>(y * self.stride + x, window.color);
+            self.fb.write_value::<u32>((y * self.stride + x) * 4, window.color);
           }
         }
       }
-      */
     }
   }
 }
@@ -143,7 +137,7 @@ fn efi_main(image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) -> 
   };
   
   wm.windows.push(Window {x: 0, y: 0, w: 300, h: 200, color: 0x0000FF00});
-  wm.draw_windows(&mut system_table_stdout.stdout());
+  wm.draw_windows();
   
   delay_approximate(3);
   
