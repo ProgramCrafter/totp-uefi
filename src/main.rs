@@ -14,22 +14,7 @@ use uefi::CStr16;
 
 use alloc::vec::Vec;
 
-fn delay(system_table: &mut SystemTable<Boot>, s: usize) {
-  system_table.boot_services().stall(s * 1000 * 1000);
-}
 
-fn delay_approximate(ms: usize) {
-  let mut v: u8 = 0;
-  let p: *mut u8 = &mut v;
-  
-  for _ in 0..ms {
-    for _ in 0..262 {
-      for i in 0..255 {
-        unsafe {core::ptr::write_volatile(p, i as u8);}
-      }
-    }
-  }
-}
 
 struct WindowManager<'boot> {
   windows:  Vec<Window>,
@@ -117,10 +102,14 @@ impl<'boot> WindowManager<'boot> {
   fn tick(&mut self, system_table: &mut SystemTable<Boot>) {
     self.draw_windows();
     
-    delay_approximate(40);
-    // system_table.boot_services().stall(50); // 50 ms
+    system_table.boot_services().stall(50000); // 50'000 mcs
+    
+    while system_table.stdin().read_key().unwrap().is_none() {
+      system_table.boot_services().stall(50000);
+    }
   }
 }
+
 
 #[entry]
 fn efi_main(image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
@@ -136,31 +125,29 @@ fn efi_main(image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) -> 
     None => {return Status::LOAD_ERROR}
   };
   
-  wm.windows.push(Window {x: 0, y: 0, w: 300, h: 200, color: 0x0000FF00});
+  wm.windows.push(Window {x: 0, y: 0, w: wm.width, h: wm.height, color: 0x0000FF00});
   
-  let mut vx: i32 = 1;
-  let mut vy: i32 = 1;
   let mut i = 0;
   loop {
-    wm.windows[0].x = ((wm.windows[0].x as i32) + vx) as usize;
-    wm.windows[0].y = ((wm.windows[0].y as i32) + vy) as usize;
-    if wm.windows[0].x + 300 >= wm.width - 1 {vx = -1;}
-    if wm.windows[0].x == 0 {vx = 1;}
-    if wm.windows[0].y + 200 >= wm.height - 1 {vy = -1;}
-    if wm.windows[0].y == 0 {vy = 1;}
+    i = (i + 1) % 16;
     
-    i += 1;
-    i %= 256 * 8;
-    
-    wm.windows[0].color = match i % 2048 {
-      0..256 =>     {0x00FFFFFF},
-      256..512 =>   {(i % 256) * 0x00000001},
-      512..768 =>   {(i % 256) * 0x00000100},
-      768..1024 =>  {(i % 256) * 0x00000101},
-      1024..1280 => {(i % 256) * 0x00010000},
-      1280..1536 => {(i % 256) * 0x00010001},
-      1536..1792 => {(i % 256) * 0x00010100},
-      1792..2048 => {(i % 256) * 0x00010101},
+    wm.windows[0].color = match i {
+      0 => {0x0000FF00},
+      1 => {0x0000FFFF},
+      2 => {0x000000FF},
+      3 => {0x00FF00FF},
+      4 => {0x00FF0000},
+      5 => {0x00FFFF00},
+      6 => {0x00FFFFFF},
+      7 => {0x00000000},
+      8  => {0x00008000},
+      9  => {0x00008080},
+      10 => {0x00000080},
+      11 => {0x00800080},
+      12 => {0x00800000},
+      13 => {0x00808000},
+      14 => {0x00808080},
+      15 => {0x00404040},
       _ => {unreachable!()}
     };
     
