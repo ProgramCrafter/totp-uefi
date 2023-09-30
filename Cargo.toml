@@ -1,5 +1,5 @@
 [package]
-name = "mov-uefi"
+name = "totp-uefi"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,6 +8,28 @@ edition = "2021"
 [dependencies]
 uefi = { version = "0.16.0", features = ["exts"] }
 uefi-services = "0.13.0"
+
+[dependencies.totp-rs]
+version = "5.3.0"
+path = "totp-rs-5.3.0"
+features = ["zeroize"]
+
+[dependencies.chrono]
+version = "0.4.31"
+features = []
+default-features = false
+
+[patch.crates-io.base32]
+version = "0.4.0"
+path = "base32-0.4.0"
+
+[patch.crates-io.sha1]
+version = "0.10.6"
+path = "sha1-0.10.6"
+
+[patch.crates-io.sha2]
+version = "0.10.8"
+path = "sha2-0.10.8"
 
 # uefi = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-v0.16.0", version = "0.16.0" }
 # uefi-services = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-services-v0.13.0", version = "0.13.0" }
