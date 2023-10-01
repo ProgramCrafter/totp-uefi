@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uefi = { version = "0.16.0", features = ["exts"] }
-uefi-services = "0.13.0"
+uefi = { version = "0.24.0", features = ["alloc"] }
+uefi-services = "0.21.0"
 
 [dependencies.totp-rs]
 version = "5.3.0"

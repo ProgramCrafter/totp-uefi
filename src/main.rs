@@ -5,11 +5,13 @@ extern crate alloc;
 extern crate uefi;
 extern crate uefi_services;
 
-use alloc::string::{ToString, String};
 use uefi::proto::console::text::Key::{Printable, Special};
+use uefi::table::runtime::VariableAttributes;
 use uefi::proto::console::text::ScanCode;
+use alloc::string::{ToString, String};
 use chrono::{FixedOffset, TimeZone};
 use uefi::prelude::*;
+use alloc::vec::Vec;
 use uefi::CStr16;
 
 use totp_rs::{Algorithm, TOTP, Secret};
@@ -29,6 +31,12 @@ struct TotpState {
     totp:   Option<TOTP>,
 }
 impl TotpState {
+    fn new(secret: String) -> TotpState {
+        let mut this = TotpState {secret: secret, totp: None};
+        this.update_totp();
+        this
+    }
+    
     fn print_key(&self, table: &mut SystemTable<Boot>, split: usize) {
         if self.secret.is_empty() {return;}
         
@@ -70,30 +78,69 @@ impl TotpState {
         return chrono_time.timestamp() as u64;
     }
     
-    fn update_secret(&mut self, table: &mut SystemTable<Boot>) {
+    fn update_secret(&mut self, table: &mut SystemTable<Boot>) -> bool {
         if let Some(key) = table.stdin().read_key().expect("input device failure") {
             match key {
                 Printable(c) => {
                     if u16::from(c) == 8 {
-                        if self.secret.is_empty() {return;}
+                        if self.secret.is_empty() {return false;}
                         self.secret.pop();
                     } else {
                         let c = char::from(c).to_uppercase().to_string();
                         
-                        if self.secret.len() + c.len() > 60 {return;}
-                        if !"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".contains(&c) {return;}
+                        if self.secret.len() + c.len() > 60 {return false;}
+                        if !"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".contains(&c) {return false;}
                         self.secret += &c;
                     }
                 },
-                Special(ScanCode(_)) => {}
+                Special(ScanCode(_)) => {return false;}
             }
             
-            let secret = Secret::Encoded(self.secret.clone()).to_bytes();
-            self.totp = secret.ok().map(|s| {
-                TOTP::new(Algorithm::SHA1, 6, 1, 30, s).ok()
-            }).flatten();
+            self.update_totp();
+            true
+        } else {
+            false
         }
     }
+    
+    fn update_totp(&mut self) {
+        let secret = Secret::Encoded(self.secret.clone()).to_bytes();
+        self.totp = secret.ok().map(|s| {
+            TOTP::new(Algorithm::SHA1, 6, 1, 30, s).ok()
+        }).flatten();
+    }
+}
+
+
+fn load_secret(table: &mut SystemTable<Boot>) -> String {
+    let mut vn_buf = [0; 255];
+    let var_name = CStr16::from_str_with_buf("totp_key", &mut vn_buf).unwrap();
+    
+    let guid = uefi::Guid::parse_or_panic("572e6927-177b-49ce-b761-2cdc60f42491");
+    let vendor = uefi::table::runtime::VariableVendor(guid);
+    
+    match table.runtime_services().get_variable_boxed(&var_name, &vendor).ok() {
+        Some((var_box, _attr)) => {
+            let var_bytes = Vec::from(var_box);
+            match String::from_utf8(var_bytes).ok() {
+                Some(s) => s,
+                None => String::new()
+            }
+        },
+        None => String::new()
+    }
+}
+
+fn save_secret(table: &mut SystemTable<Boot>, key: &str) {
+    let mut vn_buf = [0; 255];
+    let var_name = CStr16::from_str_with_buf("totp_key", &mut vn_buf).unwrap();
+    
+    let guid = uefi::Guid::parse_or_panic("572e6927-177b-49ce-b761-2cdc60f42491");
+    let vendor = uefi::table::runtime::VariableVendor(guid);
+    
+    let attr = VariableAttributes::NON_VOLATILE | VariableAttributes::BOOTSERVICE_ACCESS;
+    
+    table.runtime_services().set_variable(&var_name, &vendor, attr, key.as_bytes()).unwrap();
 }
 
 
@@ -103,11 +150,16 @@ fn efi_main(_image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) ->
         return Status::LOAD_ERROR;
     }
     
-    let mut totp = TotpState {secret: String::new(), totp: None};
+    let mut totp = TotpState::new(load_secret(&mut system_table));
+    
+    system_table.boot_services().set_watchdog_timer(0, 0x10000, None).unwrap();
     
     loop {
         totp.draw(&mut system_table);
-        totp.update_secret(&mut system_table);
+        if totp.update_secret(&mut system_table) {
+            save_secret(&mut system_table, &totp.secret);
+        }
+        
         system_table.boot_services().stall(50000);  // 50 ms
     }
 }
