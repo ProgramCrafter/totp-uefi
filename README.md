@@ -1,5 +1,5 @@
 # totp-uefi
-This is a TOTP implementation that is compiled into a single EFI file, that can be launched on a computer or in virtual machine. Thus, it can be launched without an operating system.
+This is a TOTP implementation that is compiled into a single EFI file, that can be launched on a computer or in a virtual machine. Thus, it can be launched without an operating system.
 <br>Its other features are:
 <ol>
   <li>Different key lengths are supported.</li>
