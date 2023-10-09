@@ -6,4 +6,4 @@ This is a TOTP implementation that is compiled into single EFI file, that can be
   <li>Code is generated and updated instantly.</li>
   <li>Key is preserved across reboots (you can use build from commit 20f545d if you don't want this).</li>
 </ol>
-<img src="273380260-7e381149-bfae-4769-911c-9b3d5d9c5cec.png" alt="screenshot">
+<img src="273380260-7e381149-bfae-4769-911c-9b3d5d9c5cec.png" alt="screenshot" width="500" height="186">
