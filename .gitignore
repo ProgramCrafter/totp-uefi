@@ -1,4 +1,8 @@
-/target
+debug/
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
 *.py
 *.movasm
 *.txt

@@ -12,7 +12,7 @@
 [package]
 edition = "2018"
 name = "sha1"
-version = "0.10.6"
+version = "1.0.0-patch-nostd-pc"
 authors = ["RustCrypto Developers"]
 description = "SHA-1 hash function"
 documentation = "https://docs.rs/sha1"

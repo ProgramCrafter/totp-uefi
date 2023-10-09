@@ -10,8 +10,8 @@ uefi = { version = "0.24.0", features = ["alloc"] }
 uefi-services = "0.21.0"
 
 [dependencies.totp-rs]
-version = "5.3.0"
-path = "totp-rs-5.3.0"
+version = "6.0.0-patch-nostd-pc"
+path = "totp-rs-6.0.0-patch-nostd-pc"
 features = ["zeroize"]
 
 [dependencies.chrono]
@@ -20,16 +20,16 @@ features = []
 default-features = false
 
 [patch.crates-io.base32]
-version = "0.4.0"
-path = "base32-0.4.0"
+version = "1.0.0-patch-nostd-pc"
+path = "base32-1.0.0-patch-nostd-pc"
 
 [patch.crates-io.sha1]
-version = "0.10.6"
-path = "sha1-0.10.6"
+version = "1.0.0-patch-nostd-pc"
+path = "sha1-1.0.0-patch-nostd-pc"
 
 [patch.crates-io.sha2]
-version = "0.10.8"
-path = "sha2-0.10.8"
+version = "1.0.0-patch-nostd-pc"
+path = "sha2-1.0.0-patch-nostd-pc"
 
 # uefi = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-v0.16.0", version = "0.16.0" }
 # uefi-services = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-services-v0.13.0", version = "0.13.0" }

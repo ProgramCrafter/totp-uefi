@@ -12,7 +12,7 @@
 
 [package]
 name = "base32"
-version = "0.4.0"
+version = "1.0.0-patch-nostd-pc"
 authors = ["Andreas Ots <qrpth@qrpth.eu>", "Tim Dumol <tim@timdumol.com>", "ProgramCrafter"]
 description = "Base32 encoder/decoder for Rust"
 license = "MIT OR Apache-2.0"

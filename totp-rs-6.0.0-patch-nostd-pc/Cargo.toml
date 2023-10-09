@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.61"
 name = "totp-rs"
-version = "5.3.0"
+version = "6.0.0-patch-nostd-pc"
 authors = ["Cleo Rebert <cleo.rebert@gmail.com>"]
 description = "RFC-compliant TOTP implementation with ease of use as a goal and additionnal QoL features."
 homepage = "https://github.com/constantoine/totp-rs"
