@@ -19,3 +19,4 @@ This is a TOTP implementation that is compiled into a single EFI file, that can 
 </ul>
 
 # License
+MIT
