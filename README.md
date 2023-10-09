@@ -7,3 +7,8 @@ This is a TOTP implementation that is compiled into a single EFI file, that can 
   <li>Key is preserved across reboots (you can use build from commit 20f545d if you don't want this).</li>
 </ol>
 <img src="273380260-7e381149-bfae-4769-911c-9b3d5d9c5cec.png" alt="screenshot">
+
+# Dependencies
+....
+
+# License
