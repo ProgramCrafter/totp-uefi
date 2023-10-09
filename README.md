@@ -9,6 +9,13 @@ This is a TOTP implementation that is compiled into a single EFI file, that can 
 <img src="273380260-7e381149-bfae-4769-911c-9b3d5d9c5cec.png" alt="screenshot">
 
 # Dependencies
-....
+<ul>
+  <li>uefi, uefi-services</li>
+  <li>totp-rs</li>
+  <li>chrono</li>
+  <li>base32</li>
+  <li>sha1</li>
+  <li>sha2</li>
+</ul>
 
 # License
