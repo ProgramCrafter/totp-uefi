@@ -31,6 +31,11 @@ path = "sha1-1.0.0-patch-nostd-pc"
 version = "1.0.0-patch-nostd-pc"
 path = "sha2-1.0.0-patch-nostd-pc"
 
+[patch.crates-io.crypto-common]
+version = "1.0.0-patch-nostd-pc"
+path = "crypto-common-1.0.0-patch-nostd-pc"
+
+
 # uefi = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-v0.16.0", version = "0.16.0" }
 # uefi-services = { git = "https://github.com/rust-osdev/uefi-rs", tag = "uefi-services-v0.13.0", version = "0.13.0" }
 
