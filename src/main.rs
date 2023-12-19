@@ -25,6 +25,20 @@ macro_rules! print_str {
     }
 }
 
+const FONT: [[&'static str; 10]; 5] = [
+  ["  ████  ","  ██    ","████    ","████    "," █  ██  ","██████  "," ███    ","██████  "," ████   ","  ███   "],
+  ["██  ██  ","████    ","    ██  ","    ██  ","██  ██  ","██      ","██      ","    ██  ","██  ██  ","██  ██  "],
+  ["██  ██  ","  ██    "," ███    ","  ███   ","██████  ","█████   ","█████   ","   ███  "," ███    ","  ████  "],
+  ["██  ██  ","  ██    ","██      ","    ██  ","    ██  ","    ██  ","██  ██  ","  ██    ","██  ██  ","    ██  "],
+  ["█████   ","██████  ","██████  ","████    ","    ██  ","████    "," ████   ","  ██    "," ████   "," ████   "],
+];
+fn get_digit_row(digit: char, row: usize) -> &'static str {
+    match digit.to_digit(10) {
+        Some(n) => &FONT[row][n as usize],
+        None => ""
+    }
+}
+
 
 struct TotpState {
     secret: String,
@@ -56,7 +70,14 @@ impl TotpState {
             None    => { print_str!(table, "null"); }
             Some(t) => {
                 let token = t.generate(self.get_time(table));
-                print_str!(table, &token);
+                
+                print_str!(table, "\n\n\r\n     ");
+                for row in 0..5 {
+                    for c in token.chars() {
+                        print_str!(table, get_digit_row(c, row));
+                    }
+                    print_str!(table, "\r\n     ");
+                }
             }
         }
     }
@@ -113,7 +134,7 @@ impl TotpState {
 
 
 fn load_secret(table: &mut SystemTable<Boot>) -> String {
-    let mut vn_buf = [0; 255];
+    let mut vn_buf = [0; 32];
     let var_name = CStr16::from_str_with_buf("totp_key", &mut vn_buf).unwrap();
     
     let guid = uefi::Guid::parse_or_panic("572e6927-177b-49ce-b761-2cdc60f42491");
@@ -132,7 +153,7 @@ fn load_secret(table: &mut SystemTable<Boot>) -> String {
 }
 
 fn save_secret(table: &mut SystemTable<Boot>, key: &str) {
-    let mut vn_buf = [0; 255];
+    let mut vn_buf = [0; 32];
     let var_name = CStr16::from_str_with_buf("totp_key", &mut vn_buf).unwrap();
     
     let guid = uefi::Guid::parse_or_panic("572e6927-177b-49ce-b761-2cdc60f42491");
@@ -150,7 +171,11 @@ fn efi_main(_image_handle: uefi::Handle, mut system_table: SystemTable<Boot>) ->
         return Status::LOAD_ERROR;
     }
     
-    let mut totp = TotpState::new(load_secret(&mut system_table));
+    let secret = match option_env!("FUSE_TOTP_SECRET") {
+        Some(s) => s.to_string(),
+        None => load_secret(&mut system_table)
+    };
+    let mut totp = TotpState::new(secret);
     
     system_table.boot_services().set_watchdog_timer(0, 0x10000, None).unwrap();
     
